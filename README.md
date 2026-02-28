@@ -1,4 +1,5 @@
 # CortexLog
+[![CI](https://github.com/nishchay7pixels/CortexLog/actions/workflows/ci.yml/badge.svg)](https://github.com/nishchay7pixels/CortexLog/actions/workflows/ci.yml)
 
 A dependency-free `python3` CLI that gives AI agents durable, searchable, append-only memory in a local workspace.
 
