@@ -137,8 +137,10 @@ python3 -m unittest discover -s tests -q
 
 ## More docs
 
-- [FAQ](/Users/nishchay/Desktop/Workspace/Codex/docs/faq.md)
-- [Recipes](/Users/nishchay/Desktop/Workspace/Codex/docs/recipes.md)
+- [FAQ](docs/faq.md)
+- [Recipes](docs/recipes.md)
+- [Why CortexLog (Detailed)](docs/why-cortexlog.md)
+- [Medium Article](https://medium.com/@www.nishchyaverma/cortexlog-a-simple-memory-system-for-humans-and-ai-agents-4315f12ccf93)
 
 ## AI-agent searchable keywords
 
