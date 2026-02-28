@@ -5,7 +5,14 @@ from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
 
-from tools.cortexlog import append_entry, compute_open_tasks, main, parse_tags, read_entries
+from tools.cortexlog import (
+    append_entry,
+    compute_open_tasks,
+    main,
+    parse_tags,
+    read_entries,
+    verify_truthgraph,
+)
 
 
 class CortexLogTests(unittest.TestCase):
@@ -68,6 +75,60 @@ class CortexLogTests(unittest.TestCase):
             payload = json.loads(out.getvalue())
             self.assertEqual(payload['latest_goal'], 'Goal A')
             self.assertEqual(payload['open_tasks'], ['Task A'])
+
+    def test_verify_detects_contradiction_and_dangling_dependency(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            db = Path(tmp) / '.cortexlog.jsonl'
+            append_entry(
+                db,
+                {
+                    'ts': '2026-02-28T12:00:00+00:00',
+                    'kind': 'trace',
+                    'trace_id': 't1',
+                    'claim': 'Tests pass on CI',
+                    'outcome': 'confirmed',
+                    'evidence': ['gh run view 1'],
+                },
+            )
+            append_entry(
+                db,
+                {
+                    'ts': '2026-02-28T12:01:00+00:00',
+                    'kind': 'trace',
+                    'trace_id': 't2',
+                    'claim': 'Tests pass on CI',
+                    'outcome': 'failed',
+                    'depends_on': ['t999'],
+                },
+            )
+
+            report = verify_truthgraph(read_entries(db))
+            self.assertEqual(report['status'], 'FAIL')
+            self.assertIn('tests pass on ci', report['contradictions'])
+            self.assertIn('t2 -> t999', report['dangling_dependencies'])
+            self.assertIn('tests pass on ci', report['unresolved_failed_claims'])
+
+    def test_handoff_verified_includes_truthgraph_payload(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            db = Path(tmp) / '.cortexlog.jsonl'
+            append_entry(
+                db,
+                {
+                    'ts': '2026-02-28T12:00:00+00:00',
+                    'kind': 'trace',
+                    'trace_id': 't1',
+                    'claim': 'Parser handles empty lines',
+                    'outcome': 'confirmed',
+                    'evidence': ['python -m unittest'],
+                },
+            )
+
+            with patch('sys.stdout', new_callable=StringIO) as out:
+                rc = main(['--db', str(db), 'handoff', '--format', 'json', '--verified'])
+            self.assertEqual(rc, 0)
+            payload = json.loads(out.getvalue())
+            self.assertIn('truthgraph', payload)
+            self.assertEqual(payload['truthgraph']['status'], 'PASS')
 
 
 if __name__ == '__main__':

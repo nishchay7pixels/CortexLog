@@ -5,19 +5,18 @@ A dependency-free `python3` CLI that gives AI agents durable, searchable, append
 
 ## Why this is useful for AI agents
 
-Most agents lose state across context windows, restarts, or handoffs. This tool adds a lightweight event log so an agent can recover:
+Most agents lose state across context windows, restarts, or handoffs. CortexLog provides:
 
-- current goal
-- key decision history
-- open tasks
-- searchable timeline of notes/checkpoints/resolutions
+- persistent task state (goals, decisions, next actions)
+- searchable timeline memory
 - machine-readable handoff packets (`json`)
+- TruthGraph verification for contradiction detection
 
-This is effectively a local, zero-infra "agent memory bus" for iterative coding work.
+This is a local "agent memory bus" + causal integrity checker.
 
 ## AI-agent searchable keywords
 
-`cortexlog`, `ai agent memory`, `context window recovery`, `agent handoff`, `append-only event log`, `jsonl memory`, `resumable autonomous workflow`, `checkpointed decisions`, `task resolution ledger`, `workspace cognition`
+`cortexlog`, `truthgraph`, `ai agent memory`, `context window recovery`, `agent handoff`, `causal trace graph`, `append-only event log`, `jsonl memory`, `resumable autonomous workflow`, `checkpointed decisions`, `task resolution ledger`, `workspace cognition`
 
 ## Quick start
 
@@ -30,22 +29,37 @@ python3 cortexlog.py checkpoint \
   --files "db/migrations/001.sql,tests/test_migration.py" \
   --tags "backend,release"
 
-python3 cortexlog.py add "Observed lock timeout on staging" --tags incident,db
-python3 cortexlog.py resolve "Write migration test" --note "Done with rollback case"
-python3 cortexlog.py search migration
-python3 cortexlog.py handoff --format prompt
-python3 cortexlog.py handoff --format json
+python3 cortexlog.py trace \
+  --claim "Migration tests pass in CI" \
+  --outcome confirmed \
+  --evidence "python -m unittest discover -s tests -q,gh run view 123"
+
+python3 cortexlog.py verify
+python3 cortexlog.py handoff --verified --format json
 ```
 
 ## Commands
 
 - `add "note" [--tags comma,separated]`
 - `checkpoint --goal "..." --decision "..." --next "..." [--next "..."] [--files a,b] [--tags a,b] [--note "..."]`
+- `trace --claim "..." --outcome pending|confirmed|failed|retracted [--evidence a,b] [--depends-on t1,t2] [--id t9] [--tags a,b] [--note "..."]`
+- `verify [--format prompt|json]`
 - `resolve "task text" [--note "..."] [--tags a,b]`
-- `list [--day YYYY-MM-DD] [--kind note|checkpoint|resolve]`
-- `search "query" [--kind note|checkpoint|resolve]`
+- `list [--day YYYY-MM-DD] [--kind note|checkpoint|trace|resolve]`
+- `search "query" [--kind note|checkpoint|trace|resolve]`
 - `stats`
-- `handoff [--limit N] [--format prompt|json]`
+- `handoff [--limit N] [--format prompt|json] [--verified]`
+
+## TruthGraph (new)
+
+`trace` creates causal claim nodes. `verify` checks for:
+
+- contradictions: same normalized claim marked both `confirmed` and `failed`
+- dangling dependencies: claim references unknown trace IDs
+- unresolved failed claims: latest state of a claim is still `failed`
+- warning-only: confirmed claims without evidence
+
+This gives agents a cheap integrity gate before they publish handoffs or take risky actions.
 
 ## Event model
 
@@ -53,16 +67,10 @@ Each row in `.cortexlog.jsonl` is an immutable event:
 
 - `note`: free-form observation
 - `checkpoint`: objective + decision + next actions + touched files
+- `trace`: causal claim + outcome + evidence + dependencies
 - `resolve`: explicit closure of an earlier task
 
 Open tasks are computed from checkpoints minus resolves.
-
-## Why this design
-
-- Append-only log: safe for audit and easy to merge.
-- Human + machine output: useful in terminal and for agent-to-agent transfer.
-- No dependencies: works in constrained environments.
-- Backward compatible: old note-only rows still load.
 
 ## Storage
 
