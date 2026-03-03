@@ -1,5 +1,6 @@
 # CortexLog
 [![CI](https://github.com/nishchay7pixels/CortexLog/actions/workflows/ci.yml/badge.svg)](https://github.com/nishchay7pixels/CortexLog/actions/workflows/ci.yml)
+[![Support](https://img.shields.io/badge/Support-Buy%20Me%20a%20Coffee-yellow)](https://buymeacoffee.com/nishchya)
 
 CortexLog is a local CLI that gives humans and AI agents a shared memory timeline.
 
@@ -141,6 +142,12 @@ python3 -m unittest discover -s tests -q
 - [Recipes](docs/recipes.md)
 - [Why CortexLog (Detailed)](docs/why-cortexlog.md)
 - [Medium Article](https://medium.com/@www.nishchyaverma/cortexlog-a-simple-memory-system-for-humans-and-ai-agents-4315f12ccf93)
+
+## ❤️ Support This Project
+
+If this project helps you, consider supporting development:
+
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Support-yellow?style=for-the-badge&logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/nishchya)
 
 ## AI-agent searchable keywords
 
